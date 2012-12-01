@@ -1,32 +1,62 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Earthquake Emilia Mashup</title>
+    <title>SnowMonit</title>
     <meta charset="utf-8" />
     <meta name="author" content="Francesco Bartoli, Geobeyond - http://www.geobeyond.it" />
-    <link rel="stylesheet" href="http://code.leafletjs.com/leaflet-0.3.1/leaflet.css" />
-    <!--[if lte IE 8]><link rel="stylesheet" href="script/leaflet/leaflet.ie.css" /><![endif]-->
+    <link rel="stylesheet" href="leaflet/leaflet.css" />
+    <!--[if lte IE 8]><link rel="stylesheet" href="leaflet/leaflet.ie.css" /><![endif]-->
 <!-- add jquery and jqueryui from CDN hosting-->
     <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.17/themes/smoothness/jquery-ui.css" type="text/css">
 <!-- add custom style for the page itself-->
-    <link rel="stylesheet" href="stylesheet/emilia.css" type="text/css">
+    <link rel="stylesheet" href="stylesheet/snow.css" type="text/css">
+    <link href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+    <link href="bootstrap/css/bootstrap.css" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="http://fonts.googleapis.com/css?family=Norican">
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.17/jquery-ui.min.js"></script>
     <!-- External GeoJSON file cleaned from ISIDE database CSV with points of earthquakes happened up to the date -->
-    <script src="data/events19062012.geojson"></script>
+    <!-- <script src="data/events19062012.geojson"></script> -->
 </head>
 <body>
-    <div id="map" style="height:600px"></div>
-    <div class="geolocation">
-        <a href="#" onclick="geoLocate(); return false;" title="Try Location"></a>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="#">SnowMonit</a>
+          <div class="nav-collapse">
+            <ul class="nav">
+              <li><a data-toggle="modal" href="#aboutModal"><i class="icon-question-sign icon-white"></i> About SnowMonit</a></li>
+              <li><a data-toggle="modal" href="#contactModal"><i class="icon-envelope icon-white"></i> Contact Us</a></li>
+              <li><a href="https://github.com/geobeyond/snowmonit-map" target="_blank"><i class="icon-download icon-white"></i> GitHub Repo</a></li>
+              <li><a href="http://www.geobeyond.it" target="_blank"><i class="icon-leaf icon-white"></i> Geobeyond</a></li>
+            </ul>
+            <div class="geolocation">
+        		<a href="#" onclick="geoLocate(); return false;" title="Try Location"></a>
+    		</div>
+    		<form class='location'>
+        		<input type='text' class='search' placeholder='Search Location'>
+    		</form>
+            <form class="navbar-form pull-right">
+               <span style="padding-right: 20px;"><a class='btn btn-primary btn-small' data-toggle="modal" href="#addtimeframeModal"><i class="icon-plus-sign icon-white"></i> Set layers timeframe</a></span>
+               <span><a class='btn btn-danger btn-small' data-toggle="modal" href="#removetimeframeModal"><i class="icon-minus-sign icon-white"></i> Remove timeframe</a></span>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
-    <form class='location'>
-        <input type='text' class='search' placeholder='Search Location'>
-    </form>
+    
+    <div id="map" style="height:580px"></div>
+    
     <div id="legend"></div>
 <!-- add a slider in the page -->
     <div id="slider"><div class="ui-slider-handle"></div></div>
-    <script src="http://code.leafletjs.com/leaflet-0.3.1/leaflet.js"></script>
+    <script src="leaflet/leaflet.js"></script>
     <script>
         var map = new L.Map('map');
         var cloudmadeUrl = 'http://{s}.tile.cloudmade.com/2c9aaf990ed9461691b72500453a9c4b/{styleId}/256/{z}/{x}/{y}.png',
@@ -42,40 +72,40 @@
         //        var sism_pcn = new L.TileLayer.WMS("http://demo.cubewerx.com/demo/cubeserv/cubeserv.cgi?", {
 //        var sism_pcn = new L.TileLayer.WMS("http://wms.pcn.minambiente.it/ogc", {
 // Use a WMS cascading server for the PCN service as the origin doesn't deliver the image type over HTTP properly 
-        var sism_pcn = new L.TileLayer.WMS("http://ogsuite.geobeyond.it/geoserver/pcn_proxy/wms?", {
-            layers: 'pcn_proxy:RN.ZONERISCHIO.CLASSIFICAZIONESISMICA',
+        var sdepth_gb = new L.TileLayer.WMS("http://ogsuite.geobeyond.it/geoserver/snow/wms?", {
+            layers: 'snow:snowdepthN0138_100m',
             format: 'image/png',
             transparent: true,
-            attribution: "SISMICITA' © PCN Min Ambiente",
-            opacity: .5
+            attribution: "SnowDepth © SnowMaps",
+            opacity: .8
         });
 // Create a layer where to load the earthquake points
-        var eqLayer = new L.GeoJSON();
+//        var eqLayer = new L.GeoJSON();
 // Set a default style as the points will appear
-        var eqCircleStyle = {
-            radius: 4,
-                color: "#2262CC",
-                weight: 2,
-                opacity: 0.6,
-                fillOpacity: 0.3,
-                fillColor: "#2262CC"
-        };
+//        var eqCircleStyle = {
+//            radius: 4,
+//                color: "#2262CC",
+//                weight: 2,
+//                opacity: 0.6,
+//                fillOpacity: 0.3,
+//                fillColor: "#2262CC"
+//        };
 
 // Define what happens during interaction and setting style of points into the map
         
-        eqLayer.on("featureparse", function (e){
+//        eqLayer.on("featureparse", function (e){
 // you can style features depending on their properties, etc.
-            var popupText = 'Magnitudo: ' + e.properties.Magnitudo + '<br \>';
-            if (e.layer instanceof L.Point) {
-                e.layer.setStyle({color: 'gray', weight: 1, fillColor: colorClasses[e.properties.Magnitudo]});
-            }
-            e.layer.bindPopup(popupText);
-        });
-        eqLayer.addGeoJSON(earthquakes, {
-            pointToLayer: function (latlng){
-                return new L.CircleMarker(latlng, eqCircleStyle);
-            }
-        });
+//            var popupText = 'Magnitudo: ' + e.properties.Magnitudo + '<br \>';
+//            if (e.layer instanceof L.Point) {
+//                e.layer.setStyle({color: 'gray', weight: 1, fillColor: colorClasses[e.properties.Magnitudo]});
+//            }
+//            e.layer.bindPopup(popupText);
+//        });
+//        eqLayer.addGeoJSON(earthquakes, {
+//            pointToLayer: function (latlng){
+//                return new L.CircleMarker(latlng, eqCircleStyle);
+//            }
+//        });
 //
 //
 // GetLegendGraphic request for PCN http://wms.pcn.minambiente.it/ogc?map=/ms_ogc/WMS_v1.3/Vettoriali/Classificazione_sismica_2010.map&version=1.3.0&layer=RN.ZONERISCHIO.CLASSIFICAZIONESISMICA&request=GetLegendGraphic&format=image/png&sld_version=1.1.0
@@ -88,19 +118,19 @@
             "Night View": cm_midnightCommander
         };
         var eqOverlays = {
-            "WMS PCN Sismicità": sism_pcn,
-            "Shakes": eqLayer
+            "WMS Geobeyond SnowDepth": sdepth_gb,
+//            "Shakes": eqLayer
         };
         var layersControl = new L.Control.Layers(baseMaps, eqOverlays, {
             collapsed: !L.Browser.touch
         });
 
-        map.setView(new L.LatLng(44.8909,11.272), 7).addLayer(cm_base).addLayer(sism_pcn).addLayer(eqLayer);
+        map.setView(new L.LatLng(46.4209,12.272), 10).addLayer(cm_base).addLayer(sdepth_gb);
         map.addControl(layersControl);
         $("#slider").slider({
-            value: 50,
+            value: 80,
             slide: function(e, ui) {
-                sism_pcn.setOpacity(ui.value / 100);
+                sdepth_gb.setOpacity(ui.value / 100);
             }
         });
 //
@@ -145,7 +175,7 @@
 			legendHTML = [];
 		
 //		legendHTML.push('<div><img href="http://wms.pcn.minambiente.it/ogc?map=/ms_ogc/WMS_v1.3/Vettoriali/Classificazione_sismica_2010.map&version=1.3.0&layer=RN.ZONERISCHIO.CLASSIFICAZIONESISMICA&request=GetLegendGraphic&format=image/png&sld_version=1.1.0"></img></div>');
-        legendHTML.push('<div id=​"legend">​<img src="http://wms.pcn.minambiente.it/ogc?map=/ms_ogc/WMS_v1.3/Vettoriali/Classificazione_sismica_2010.map&version=1.3.0&layer=RN.ZONERISCHIO.CLASSIFICAZIONESISMICA&request=GetLegendGraphic&format=image/png&sld_version=1.1.0"></div>');
+        legendHTML.push('<div id=​"legend">​<img src="http://ogsuite.geobeyond.it/geoserver/wms?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&WIDTH=15&HEIGHT=20&STRICT=false&style=snow_depth&transparent=true" height=300px width=200px></div>');
 		legend.innerHTML = legendHTML.join('');
 
     </script>
